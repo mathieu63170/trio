@@ -130,8 +130,10 @@ public class TrioConsole {
                 jeu.selectionnerCarte(index);
                 System.out.println("Carte " + index + " sélectionnée!");
                 System.out.println("Cartes sélectionnées: " + jeu.getCartesSelectionnees().size() + "/3");
-            } catch (NumberFormatException | IllegalArgumentException e) {
+            } catch (NumberFormatException e) {
                 System.out.println("Entrée invalide!");
+            } catch (IllegalArgumentException e) {
+                System.out.println("Index de carte invalide!");
             }
         }
     }
