@@ -1,0 +1,21 @@
+{
+  "name": "trio-game",
+  "version": "1.0.0",
+  "description": "Jeu Trio en ligne",
+  "main": "serveur/server.js",
+  "scripts": {
+    "start": "node serveur/server.js",
+    "dev": "nodemon serveur/server.js"
+  },
+  "keywords": ["trio", "game", "online"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "socket.io": "^4.5.4",
+    "cors": "^2.8.5"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.20"
+  }
+}

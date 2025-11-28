@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Trio - Jeu en Ligne</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <!-- Écran d'accueil -->
+    <div id="ecran-accueil" class="screen active">
+      <div class="welcome">
+        <h1>🎮 Jeu du Trio</h1>
+        <p>Trouvez des groupes de trois cartes qui forment un trio valide!</p>
+        <div class="form-group">
+          <input type="text" id="nomJoueur" placeholder="Votre nom" maxlength="20">
+          <input type="text" id="codeRoom" placeholder="Code de la room (optionnel)" maxlength="10">
+          <button onclick="rejoindreJeu()">Rejoindre</button>
+        </div>
+        <p class="info">💡 Valide si : Même propriété OU Propriété différente pour chaque attribut</p>
+      </div>
+    </div>
+
+    <!-- Écran du jeu -->
+    <div id="ecran-jeu" class="screen">
+      <div class="header">
+        <div class="title">
+          <h2>Trio</h2>
+          <span id="room-id" class="room-id"></span>
+        </div>
+        <div class="scores">
+          <div id="scores-list" class="scores-list"></div>
+        </div>
+        <button class="btn-quitter" onclick="quitterJeu()">Quitter</button>
+      </div>
+
+      <div class="content">
+        <div id="grille-cartes" class="grille-cartes"></div>
+        <div class="actions">
+          <button id="btn-verifier" class="btn-verifier" onclick="verifierTrio()" disabled>Vérifier Trio</button>
+          <button id="btn-nouvelle" class="btn-nouvelle" onclick="nouvellePartie()" style="display:none;">Nouvelle Partie</button>
+          <div id="message" class="message"></div>
+        </div>
+      </div>
+
+      <div class="stats">
+        <p>Cartes en jeu: <span id="nb-cartes">12</span></p>
+        <p>Cartes restantes: <span id="cartes-restantes">69</span></p>
+      </div>
+    </div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>
