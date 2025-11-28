@@ -1,21 +1,55 @@
 {
-  "name": "trio-game",
+  "name": "Trio-UTBM",
   "version": "1.0.0",
-  "description": "Jeu Trio en ligne",
-  "main": "serveur/server.js",
+  "description": "Jeu Trio en Java - Projet AP4B UTBM",
+  "type": "project",
+  "language": "Java",
+  "javaVersion": "11+",
+  "main": "src/ui/TrioGUI.java",
   "scripts": {
-    "start": "node serveur/server.js",
-    "dev": "nodemon serveur/server.js"
+    "build": "bash build.sh",
+    "build-windows": "cmd /c build.bat",
+    "gui": "java -jar build/jar/Trio.jar",
+    "console": "java -cp build/classes ui.TrioConsole",
+    "clean": "rm -rf build"
   },
-  "keywords": ["trio", "game", "online"],
-  "author": "",
+  "keywords": [
+    "trio",
+    "game",
+    "java",
+    "utbm",
+    "educational",
+    "cards"
+  ],
+  "author": "Groupe AP4B",
   "license": "MIT",
-  "dependencies": {
-    "express": "^4.18.2",
-    "socket.io": "^4.5.4",
-    "cors": "^2.8.5"
+  "structure": {
+    "src": {
+      "model": [
+        "Carte.java",
+        "Joueur.java",
+        "Deck.java",
+        "Forme.java",
+        "Couleur.java",
+        "Remplissage.java"
+      ],
+      "game": [
+        "Trio.java"
+      ],
+      "ui": [
+        "TrioConsole.java",
+        "TrioGUI.java"
+      ]
+    },
+    "build": {
+      "classes": "Répertoire de compilation",
+      "jar": "Fichier JAR exécutable"
+    }
   },
-  "devDependencies": {
-    "nodemon": "^2.0.20"
+  "compilation": {
+    "javac_options": "-d build/classes -sourcepath src",
+    "jar_main": "ui.TrioGUI",
+    "console_main": "ui.TrioConsole"
   }
 }
+
