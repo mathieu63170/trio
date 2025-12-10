@@ -3,6 +3,7 @@ package client;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.util.*;
 
 /**
  * Interface graphique client Trio
@@ -17,14 +18,19 @@ public class TrioClientGUI extends JFrame {
     private JPanel panelJeu;
     private CardLayout cardLayout;
     private JPanel panelPrincipal;
+    private JButton[] boutonsCartes;
+    private Set<Integer> cartesSelectionnees;
+    private JLabel labelMessage;
+    private JLabel labelJoueur;
     
     public TrioClientGUI(TrioClient client) {
         this.client = client;
+        this.cartesSelectionnees = new HashSet<>();
         client.setGUI(this);
         
         setTitle("Trio - Client");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(800, 600);
+        setSize(900, 700);
         setLocationRelativeTo(null);
         
         // CardLayout pour basculer entre connexion et jeu
@@ -90,26 +96,94 @@ public class TrioClientGUI extends JFrame {
         panelJeu.setBackground(new Color(200, 220, 200));
         
         // Panel haut: informations
-        JPanel panelHaut = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        panelHaut.add(new JLabel("Bienvenue au jeu Trio!"));
+        JPanel panelHaut = new JPanel(new FlowLayout(FlowLayout.LEFT, 20, 10));
+        panelHaut.setBackground(new Color(200, 220, 200));
+        labelJoueur = new JLabel("Joueur actuel: -");
+        labelJoueur.setFont(new Font("Arial", Font.BOLD, 14));
+        panelHaut.add(labelJoueur);
         panelJeu.add(panelHaut, BorderLayout.NORTH);
         
-        // Panel central: cartes
+        // Panel central: cartes avec GridLayout
         JPanel panelCartes = new JPanel(new GridLayout(3, 4, 5, 5));
         panelCartes.setBackground(new Color(200, 220, 200));
+        panelCartes.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        
+        boutonsCartes = new JButton[12];
         for (int i = 0; i < 12; i++) {
+            final int index = i;
             JButton btn = new JButton("Carte " + i);
+            btn.setFont(new Font("Arial", Font.BOLD, 12));
+            btn.setBackground(new Color(100, 150, 200));
+            btn.setForeground(Color.WHITE);
+            btn.setFocusPainted(false);
+            btn.addActionListener(e -> selectionnerCarte(index));
+            boutonsCartes[i] = btn;
             panelCartes.add(btn);
         }
-        panelJeu.add(new JScrollPane(panelCartes), BorderLayout.CENTER);
+        panelJeu.add(panelCartes, BorderLayout.CENTER);
         
-        // Panel bas: boutons
-        JPanel panelBas = new JPanel(new FlowLayout());
+        // Panel bas: boutons et messages
+        JPanel panelBas = new JPanel(new BorderLayout());
+        panelBas.setBackground(new Color(200, 220, 200));
+        
+        // Boutons d'action
+        JPanel panelBoutons = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 10));
+        panelBoutons.setBackground(new Color(200, 220, 200));
+        
         JButton btnVerifier = new JButton("Vérifier Trio");
+        btnVerifier.setFont(new Font("Arial", Font.BOLD, 12));
+        btnVerifier.addActionListener(e -> verifierTrio());
+        
         JButton btnAnnuler = new JButton("Annuler");
-        panelBas.add(btnVerifier);
-        panelBas.add(btnAnnuler);
+        btnAnnuler.setFont(new Font("Arial", Font.BOLD, 12));
+        btnAnnuler.addActionListener(e -> annulerSelection());
+        
+        panelBoutons.add(btnVerifier);
+        panelBoutons.add(btnAnnuler);
+        panelBas.add(panelBoutons, BorderLayout.CENTER);
+        
+        // Message
+        labelMessage = new JLabel("Sélectionnez 3 cartes pour vérifier un trio");
+        labelMessage.setFont(new Font("Arial", Font.PLAIN, 12));
+        labelMessage.setHorizontalAlignment(SwingConstants.CENTER);
+        panelBas.add(labelMessage, BorderLayout.SOUTH);
+        
         panelJeu.add(panelBas, BorderLayout.SOUTH);
+    }
+    
+    private void selectionnerCarte(int index) {
+        if (cartesSelectionnees.contains(index)) {
+            cartesSelectionnees.remove(index);
+            boutonsCartes[index].setBackground(new Color(100, 150, 200));
+        } else if (cartesSelectionnees.size() < 3) {
+            cartesSelectionnees.add(index);
+            boutonsCartes[index].setBackground(new Color(255, 255, 0));
+        } else {
+            afficherMessage("Vous avez déjà sélectionné 3 cartes!");
+            return;
+        }
+        
+        afficherMessage("Cartes sélectionnées: " + cartesSelectionnees.size() + "/3");
+        
+        // Envoyer la sélection au serveur
+        client.selectionnerCarte(index);
+    }
+    
+    private void verifierTrio() {
+        if (cartesSelectionnees.size() != 3) {
+            afficherMessage("Vous devez sélectionner exactement 3 cartes!");
+            return;
+        }
+        client.verifierTrio();
+    }
+    
+    private void annulerSelection() {
+        for (int index : cartesSelectionnees) {
+            boutonsCartes[index].setBackground(new Color(100, 150, 200));
+        }
+        cartesSelectionnees.clear();
+        afficherMessage("Sélection annulée");
+        client.annulerSelection();
     }
     
     private void connecter() {
@@ -121,9 +195,16 @@ public class TrioClientGUI extends JFrame {
         
         if (client.connecter(nomJoueur)) {
             cardLayout.show(panelPrincipal, "JEU");
+            labelJoueur.setText("Joueur: " + nomJoueur);
         } else {
             JOptionPane.showMessageDialog(this, "Erreur: Impossible de se connecter au serveur!");
         }
+    }
+    
+    public void afficherMessage(String data) {
+        SwingUtilities.invokeLater(() -> {
+            labelMessage.setText(data);
+        });
     }
     
     public void mettreAJourEtat(String data) {
@@ -144,15 +225,9 @@ public class TrioClientGUI extends JFrame {
         });
     }
     
-    public void afficherMessage(String data) {
-        SwingUtilities.invokeLater(() -> {
-            System.out.println("Message: " + data);
-        });
-    }
-    
     public void afficherGagnant(String data) {
         SwingUtilities.invokeLater(() -> {
-            JOptionPane.showMessageDialog(this, data);
+            JOptionPane.showMessageDialog(this, "Partie terminée: " + data);
         });
     }
     
