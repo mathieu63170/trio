@@ -2,6 +2,7 @@ package commun.action;
 
 public class ActionMin extends Action {
     private int idCible;
+    private static final long serialVersionUID = 1L; 
 
     public ActionMin(int idJoueur, int idCible) {
         super(idJoueur);

@@ -2,6 +2,7 @@ package serveur;
 import commun.action.*;
 import commun.plateau.*;
 
+
 public class StatutJeu {
     Plateau plateau;
     Action actionEnCours;
@@ -14,6 +15,10 @@ public class StatutJeu {
 
     public void demarrerServeur() {
         // Implémentation du démarrage du serveur
+    }
+
+    public void initialiserJeu() {
+        // Implémentation de l'initialisation du jeu
     }
 
     public void gerrerclient() {

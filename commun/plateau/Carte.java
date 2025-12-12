@@ -1,6 +1,9 @@
 package commun.plateau;
+import java.io.Serializable;
 
-public class Carte {
+public class Carte implements Serializable {
+    private static final long serialVersionUID = 1L; 
+    
     private int valeur;
     private boolean revelee;
 

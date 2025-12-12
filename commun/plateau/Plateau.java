@@ -1,8 +1,11 @@
 package commun.plateau;
 
+import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 
-public class Plateau {
+public class Plateau implements Serializable {
+    private static final long serialVersionUID = 1L; 
     private List<Joueur> joueurs;
     private List<Carte> millieu;
     private int joueurActuel;
@@ -18,57 +21,49 @@ public class Plateau {
         this.gagnant = gagnant;
     }
 
-    public List<Joueur> getJoueurs() {
-        return joueurs;
-    }
+    // --- GETTERS & SETTERS (Standards) ---
+    public List<Joueur> getJoueurs() { return joueurs; }
+    public void setJoueurs(List<Joueur> joueurs) { this.joueurs = joueurs; }
+    
+    public List<Carte> getMillieu() { return millieu; }
+    public void setMillieu(List<Carte> millieu) { this.millieu = millieu; }
+    
+    public int getJoueurActuel() { return joueurActuel; }
+    public void setJoueurActuel(int joueurActuel) { this.joueurActuel = joueurActuel; }
+    
+    public Phase getPhaseActuelle() { return phaseActuelle; }
+    public void setPhaseActuelle(Phase phaseActuelle) { this.phaseActuelle = phaseActuelle; }
+    
+    public int getGagnant() { return gagnant; }
+    public void setGagnant(int gagnant) { this.gagnant = gagnant; }
 
-    public void setJoueurs(List<Joueur> joueurs) {
-        this.joueurs = joueurs;
-    }
-
-    public List<Carte> getMillieu() {
-        return millieu;
-    }
-
-    public void setMillieu(List<Carte> millieu) {
-        this.millieu = millieu;
-    }
-
-    public int getJoueurActuel() {
-        return joueurActuel;
-    }
-
-    public void setJoueurActuel(int joueurActuel) {
-        this.joueurActuel = joueurActuel;
-    }
-
-    public Phase getPhaseActuelle() {
-        return phaseActuelle;
-    }
-
-    public void setPhaseActuelle(Phase phaseActuelle) {
-        this.phaseActuelle = phaseActuelle;
-    }
-
-    public int getGagnant() {
-        return gagnant;
-    }
-
-    public void setGagnant(int gagnant) {
-        this.gagnant = gagnant;
-    }
-
+    /**
+     * Récupère toutes les cartes actuellement révélées sur tout le plateau
+     * (Mains des joueurs + Milieu)
+     */
     public List<Carte> getCarteRevelee(){
-        List<Carte> liste = new java.util.ArrayList<>();
-        for(int i= 0; i<joueurs.size(); i++){
-            Joueur j= joueurs.get(i);
-            for(int y=0; y<j.getDeck().size(); y++){
-                Carte c= j.getDeck().get(y);
+        List<Carte> liste = new ArrayList<>();
+        
+        // 1. Chercher dans les mains des joueurs
+        if (joueurs != null) {
+            for(Joueur j : joueurs){
+                for(Carte c : j.getDeck()){
+                    if(c.isRevelee()){
+                        liste.add(c);
+                    }
+                }
+            }
+        }
+        
+        // 2. Chercher dans le milieu (Correction importante)
+        if (millieu != null) {
+            for(Carte c : millieu){
                 if(c.isRevelee()){
                     liste.add(c);
                 }
             }
         }
+        
         return liste;
     }
 }

@@ -1,8 +1,10 @@
 package commun.plateau;
 
+import java.io.Serializable;
 import java.util.List;
 
-public class Trio {
+public class Trio implements Serializable {
+    private static final long serialVersionUID = 1L; 
     private List<Carte> cartes;
     private int numero;
 

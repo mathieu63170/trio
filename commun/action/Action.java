@@ -1,6 +1,9 @@
 package commun.action;
 
-public class Action {
+import java.io.Serializable;
+
+public class Action implements Serializable {
+    private static final long serialVersionUID = 1L; 
     private int idJoueur;
 
     public Action(int idJoueur) {
