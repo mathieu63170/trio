@@ -1,9 +1,9 @@
 @echo off
-REM Script de compilation et création du JAR exécutable (Windows)
+REM Script de compilation et creation du JAR executable (Windows)
 
 echo Compilation du projet Trio...
 
-REM Créer les répertoires de sortie
+REM Creer les repertoires de sortie
 if not exist build\classes mkdir build\classes
 if not exist build\jar mkdir build\jar
 
@@ -14,9 +14,9 @@ if %ERRORLEVEL% equ 0 (
     echo.
     echo Compilation reussie!
     
-    REM Créer le JAR
+    REM Creer le JAR
     cd build\classes
-    jar cvfe ..\jar\Trio.jar ui.TrioGUI model\*.class game\*.class ui\*.class >nul 2>&1
+    jar cvfe ..\jar\Trio.jar ui.FenetreConnexion . >nul 2>&1
     cd ..\..
     
     echo JAR cree: build\jar\Trio.jar
