@@ -1,9 +1,9 @@
 #!/bin/bash
-# Script de compilation et création du JAR exécutable
+# Script de compilation et creation du JAR executable
 
 echo "Compilation du projet Trio..."
 
-# Créer le répertoire de sortie
+# Creer le repertoire de sortie
 mkdir -p build/classes
 mkdir -p build/jar
 
@@ -11,14 +11,14 @@ mkdir -p build/jar
 javac -d build/classes -sourcepath src src/model/*.java src/game/*.java src/ui/*.java
 
 if [ $? -eq 0 ]; then
-    echo "✓ Compilation réussie!"
+    echo "Compilation reussie!"
     
-    # Créer le JAR
+    # Creer le JAR
     cd build/classes
-    jar cvfe ../jar/Trio.jar ui.TrioGUI model/*.class game/*.class ui/*.class > /dev/null 2>&1
+    jar cvfe ../jar/Trio.jar ui.FenetreConnexion . > /dev/null 2>&1
     cd ../../
     
-    echo "✓ JAR créé: build/jar/Trio.jar"
+    echo "JAR cree: build/jar/Trio.jar"
     echo ""
     echo "Pour lancer le jeu graphique:"
     echo "  java -jar build/jar/Trio.jar"
@@ -26,6 +26,6 @@ if [ $? -eq 0 ]; then
     echo "Pour lancer le jeu en mode console:"
     echo "  java -cp build/classes ui.TrioConsole"
 else
-    echo "✗ Erreur de compilation!"
+    echo "Erreur de compilation!"
     exit 1
 fi

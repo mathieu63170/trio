@@ -29,7 +29,9 @@ public class Joueur implements Serializable {
         this.id = id;
     }
     
-    public
+    public void setNom(String nom) {
+        this.nom = nom;
+    }
 
     public List<Carte> getDeck() {
         return deck;
