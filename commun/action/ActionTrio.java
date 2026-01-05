@@ -1,20 +1,39 @@
 package commun.action;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class ActionTrio extends Action {
     
     private static final long serialVersionUID = 1L; 
-    private int numeroTrio;
+    private List<Integer> idsCartes;  // IDs des cartes (plus sûr que les objets)
+    private List<Integer> proprietaires;  // ID du propriétaire de chaque carte
     
-    public ActionTrio(int idJoueur, int numeroTrio) {
+    public ActionTrio(int idJoueur, List<Integer> idsCartes) {
         super(idJoueur);
-        this.numeroTrio = numeroTrio;
+        this.idsCartes = idsCartes;
+        this.proprietaires = new ArrayList<>();
     }
     
-    public int getNumeroTrio() {
-        return numeroTrio;
+    public ActionTrio(int idJoueur, List<Integer> idsCartes, List<Integer> proprietaires) {
+        super(idJoueur);
+        this.idsCartes = idsCartes;
+        this.proprietaires = proprietaires;
     }
     
-    public void setNumeroTrio(int numeroTrio) {
-        this.numeroTrio = numeroTrio;
+    public List<Integer> getIdsCartes() {
+        return idsCartes;
+    }
+    
+    public void setIdsCartes(List<Integer> idsCartes) {
+        this.idsCartes = idsCartes;
+    }
+    
+    public List<Integer> getProprietaires() {
+        return proprietaires;
+    }
+    
+    public void setProprietaires(List<Integer> proprietaires) {
+        this.proprietaires = proprietaires;
     }
 }

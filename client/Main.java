@@ -1,10 +1,12 @@
 package client;
 
-import ui.FenetreConnexion;
+import javax.swing.*;
 
+/**
+ * Main - Point d'entrée du client Trio
+ */
 public class Main {
     public static void main(String[] args) {
-        // Lancer l'interface de connexion (point d'entrée du jeu)
-        new FenetreConnexion();
+        SwingUtilities.invokeLater(() -> new TrioGUI());
     }
 }

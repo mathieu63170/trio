@@ -24,16 +24,13 @@ public class Deck implements Serializable {
     }
 
     /**
-     * Génère les 81 cartes (3^4 combinaisons possibles)
+     * Génère les cartes: 12 valeurs × 3 cartes = 36 cartes total
      */
     private void genererCartes() {
-        for (int valeur = 1; valeur <= 3; valeur++) {
-            for (Forme forme : Forme.values()) {
-                for (Couleur couleur : Couleur.values()) {
-                    for (Remplissage remplissage : Remplissage.values()) {
-                        cartes.add(new Carte(valeur, forme, couleur, remplissage));
-                    }
-                }
+        // Générer 3 exemplaires de chaque valeur (1-12)
+        for (int exemplaire = 0; exemplaire < 3; exemplaire++) {
+            for (int valeur = 1; valeur <= 12; valeur++) {
+                cartes.add(new Carte(valeur, Forme.CERCLE, Couleur.ROUGE, Remplissage.PLEIN));
             }
         }
     }

@@ -1,7 +1,7 @@
 package serveur;
 
-import commun.plateau.*;
 import commun.action.*;
+import commun.plateau.*;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -13,8 +13,9 @@ import java.util.List;
 public class StatutJeu {
 
     private Plateau plateau;
-    private Regle regle;
-    private List<ObjectOutputStream> clientsOutput; // Pour envoyer les infos aux joueurs
+    private final Regle regle;
+    private final List<ObjectOutputStream> clientsOutput; // Pour envoyer les infos aux joueurs
+    private final Object plateauLock = new Object(); // Lock pour synchronisation thread-safe
 
     public StatutJeu() {
         this.regle = new Regle();
@@ -29,10 +30,16 @@ public class StatutJeu {
 
         // 1. Création du paquet (3 cartes de chaque valeur de 1 à 12)
         List<Carte> toutesLesCartes = new ArrayList<>();
+        Forme[] formes = {Forme.CERCLE, Forme.CARRE, Forme.ONDULATION};
+        Couleur[] couleurs = {Couleur.ROUGE, Couleur.VERT, Couleur.VIOLET};
+        Remplissage[] remplissages = {Remplissage.PLEIN, Remplissage.VIDE, Remplissage.RAYE};
+        
         for (int val = 1; val <= 12; val++) {
             for (int i = 0; i < 3; i++) {
-                // On pourrait ajouter un ID unique ici si Carte a un champ id
-                toutesLesCartes.add(new Carte(val)); 
+                Forme forme = formes[(val - 1) % 3];
+                Couleur couleur = couleurs[(val - 1) / 3 % 3];
+                Remplissage remplissage = remplissages[(val - 1) / 9 % 3];
+                toutesLesCartes.add(new Carte(1, forme, couleur, remplissage));
             }
         }
 
@@ -42,11 +49,7 @@ public class StatutJeu {
         // 3. Création des joueurs
         List<Joueur> joueurs = new ArrayList<>();
         for (int i = 0; i < nbJoueurs; i++) {
-            Joueur j = new Joueur();
-            j.setId(i); // ID simple : 0, 1, 2...
-            j.setNom("Joueur " + i);
-            j.setDeck(new ArrayList<>());
-            j.setTrios(new ArrayList<>());
+            Joueur j = new Joueur(i, "Joueur " + i, new ArrayList<>(), new ArrayList<>());
             joueurs.add(j);
         }
 
@@ -74,7 +77,7 @@ public class StatutJeu {
         }
 
         // 6. Création du Plateau initial
-        this.plateau = new Plateau(joueurs, milieu, 0, Phase.EN_COURS, -1);
+        this.plateau = new Plateau(joueurs, milieu, 0, Phase.PREMIERE_MANCHE, -1);
         System.out.println("Partie initialisée ! Plateau prêt.");
     }
 
@@ -114,7 +117,7 @@ public class StatutJeu {
             }
             
         } catch (IOException e) {
-            e.printStackTrace();
+            System.err.println("Erreur serveur: " + e.getMessage());
         }
     }
 
@@ -122,8 +125,8 @@ public class StatutJeu {
      * Classe interne (Thread) pour écouter un joueur spécifique
      */
     class GestionJoueur implements Runnable {
-        private ObjectInputStream in;
-        private int idJoueur;
+        private final ObjectInputStream in;
+        private final int idJoueur;
 
         public GestionJoueur(ObjectInputStream in, int id) {
             this.in = in;
@@ -137,21 +140,22 @@ public class StatutJeu {
                     // 1. Attendre une Action
                     Object objetRecu = in.readObject();
                     
-                    if (objetRecu instanceof Action) {
-                        Action action = (Action) objetRecu;
+                    if (objetRecu instanceof Action action) {
                         System.out.println("Action reçue du J" + idJoueur);
 
                         // 2. Appliquer les règles (Synchronized pour éviter conflits si 2 jouent en même temps)
-                        synchronized (plateau) {
-                            plateau = regle.appliquer(plateau, action);
+                        synchronized (StatutJeu.this.plateauLock) {
+                            regle.appliquer(StatutJeu.this.plateau, action);
                         }
 
                         // 3. Diffuser le nouveau plateau à TOUS les joueurs
                         diffuserPlateau();
                     }
                 }
-            } catch (Exception e) {
-                System.out.println("Joueur " + idJoueur + " déconnecté.");
+            } catch (IOException e) {
+                System.err.println("Joueur " + idJoueur + " déconnecté: " + e.getMessage());
+            } catch (ClassNotFoundException e) {
+                System.err.println("Erreur de désérialisation: " + e.getMessage());
             }
         }
     }
@@ -163,7 +167,7 @@ public class StatutJeu {
                 out.writeObject(plateau);
                 out.flush();
             } catch (IOException e) {
-                e.printStackTrace();
+                System.err.println("Erreur lors de l'envoi du plateau: " + e.getMessage());
             }
         }
     }

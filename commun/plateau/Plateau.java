@@ -8,7 +8,9 @@ public class Plateau implements Serializable {
     private static final long serialVersionUID = 1L; 
     private List<Joueur> joueurs;
     private List<Carte> millieu;
+    private List<CarteRevealee> cartesRevelees;  // Cartes révélées publiquement (MAX/MIN)
     private int joueurActuel;
+    private int etapeJoueurActuel;  // Compteur d'étapes du joueur actuel (0-3)
     private Phase phaseActuelle;
     private int gagnant;
 
@@ -16,7 +18,9 @@ public class Plateau implements Serializable {
                    Phase phaseActuelle, int gagnant) {
         this.joueurs = joueurs;
         this.millieu = millieu;
+        this.cartesRevelees = new ArrayList<>();
         this.joueurActuel = joueurActuel;
+        this.etapeJoueurActuel = 0;
         this.phaseActuelle = phaseActuelle;
         this.gagnant = gagnant;
     }
@@ -28,8 +32,14 @@ public class Plateau implements Serializable {
     public List<Carte> getMillieu() { return millieu; }
     public void setMillieu(List<Carte> millieu) { this.millieu = millieu; }
     
+    public List<CarteRevealee> getCartesRevelees() { return cartesRevelees; }
+    public void setCartesRevelees(List<CarteRevealee> cartesRevelees) { this.cartesRevelees = cartesRevelees; }
+    
     public int getJoueurActuel() { return joueurActuel; }
     public void setJoueurActuel(int joueurActuel) { this.joueurActuel = joueurActuel; }
+    
+    public int getEtapeJoueurActuel() { return etapeJoueurActuel; }
+    public void setEtapeJoueurActuel(int etape) { this.etapeJoueurActuel = etape; }
     
     public Phase getPhaseActuelle() { return phaseActuelle; }
     public void setPhaseActuelle(Phase phaseActuelle) { this.phaseActuelle = phaseActuelle; }

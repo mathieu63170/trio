@@ -6,9 +6,9 @@ import java.io.Serializable;
  * Énumération des couleurs possibles pour les cartes du jeu Trio
  */
 public enum Couleur implements Serializable {
-    ROUGE("[R]", "Rouge"),
-    VERT("[V]", "Vert"),
-    VIOLET("[P]", "Violet");
+    ROUGE("🔴", "Rouge"),
+    VERT("🟢", "Vert"),
+    VIOLET("🟣", "Violet");
 
     private final String emoji;
     private final String nom;
