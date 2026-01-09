@@ -303,7 +303,7 @@ public class Serveur {
                 
             } else {
                 
-                System.out.println("    TRIO INVALIDE - Passage au joueur suivant");
+                System.out.println("TRIO INVALIDE - Passage au joueur suivant");
                 
                 
                 System.out.println("    Réinitialisation des cartes révélées après test de trio");
@@ -312,6 +312,11 @@ public class Serveur {
                 
                 passerAuJoueurSuivant();
             }
+            return;
+        } else if (action instanceof ActionRevealCarte) {
+            ActionRevealCarte ar = (ActionRevealCarte) action;
+            System.out.println("ActionRevealCarte reçue - demandeur: " + ar.getIdJoueur() + ", source: " + ar.getIdJoueurSource() + ", carte: " + (ar.getCarte()!=null ? ar.getCarte().getId() : "null"));
+            traiterActionRevealCarte(ar);
             return;
         }
         
@@ -397,6 +402,64 @@ public class Serveur {
     }
     
     
+    private void traiterActionRevealCarte(ActionRevealCarte ar) {
+        int idSource = ar.getIdJoueurSource();
+        int idDemandeur = ar.getIdJoueur();
+        if (plateau == null) return;
+        Carte carte = null;
+        int ownerId = idDemandeur;
+
+        if (idSource <= 0) {
+            if (plateau.getMillieu() != null) {
+                for (Carte c : plateau.getMillieu()) {
+                    if (ar.getCarte() != null && c.getId() == ar.getCarte().getId()) {
+                        carte = c;
+                        break;
+                    }
+                }
+            }
+            if (carte == null) {
+                System.out.println("Carte du milieu introuvable pour révélation");
+                return;
+            }
+            ownerId = idDemandeur;
+
+        } else {
+            Joueur source = findJoueur(idSource);
+            if (source == null || source.getDeck() == null) {
+                System.out.println("Joueur source introuvable ou sans deck");
+                return;
+            }
+            for (Carte c : source.getDeck()) {
+                if (ar.getCarte() != null && c.getId() == ar.getCarte().getId()) {
+                    carte = c;
+                    break;
+                }
+            }
+            if (carte == null) {
+                System.out.println("Carte introuvable dans la main du joueur " + idSource);
+                return;
+            }
+        }
+
+        int cartesReveleesDuJoueur = compterCartesReveleesParJoueur(ownerId);
+        if (cartesReveleesDuJoueur >= 3) {
+            System.out.println("Le joueur " + ownerId + " a déjà " + cartesReveleesDuJoueur + " cartes révélées");
+            return;
+        }
+        for (CarteRevealee cr : plateau.getCartesRevelees()) {
+            if (cr.getIdProprietaire() == ownerId && cr.getCarte().getId() == carte.getId()) {
+                System.out.println("Carte déjà révélée pour ce propriétaire");
+                return;
+            }
+        }
+        CarteRevealee carteRev = new CarteRevealee(carte, ownerId, ar.getType());
+        plateau.getCartesRevelees().add(carteRev);
+        carte.setRevelee(true);
+        System.out.println("Carte révélée (source: " + idSource + ", owner: " + ownerId + ") : " + carte.getValeur());
+        broadcastPlateau();
+    }
+
     private ClientHandler findClientByJoueurId(int joueurId) {
         for (ClientHandler client : clients) {
             if (client.getIdJoueur() == joueurId) {
@@ -417,7 +480,7 @@ public class Serveur {
 
     
     private void broadcastPlateau() {
-        System.out.println(" BROADCAST PLATEAU - Phase: " + plateau.getPhaseActuelle() + ", Gagnant: " + plateau.getGagnant());
+        System.out.println("BROADCAST PLATEAU - Phase: " + plateau.getPhaseActuelle() + ", Gagnant: " + plateau.getGagnant());
         for (ClientHandler client : clients) {
             if (client.isActif()) {
                 client.envoyerPlateau(plateau);
@@ -428,23 +491,23 @@ public class Serveur {
     
     private boolean verifierTrioValide(ActionTrio action) {
         if (action == null) {
-            System.out.println("    ActionTrio NULL");
+            System.out.println("ActionTrio NULL");
             return false;
         }
         
         List<Integer> idsCartes = action.getIdsCartes();
         List<Integer> proprietaires = action.getProprietaires();
         
-        System.out.println("    Vérification trio: " + (idsCartes != null ? idsCartes.size() : "null") + " cartes, " + 
+        System.out.println("Vérification trio: " + (idsCartes != null ? idsCartes.size() : "null") + " cartes, " + 
                           (proprietaires != null ? proprietaires.size() : "null") + " propriétaires");
         
         if (idsCartes == null || idsCartes.size() != 3) {
-            System.out.println("    Pas exactement 3 cartes");
+            System.out.println("Pas exactement 3 cartes");
             return false;
         }
         
         if (proprietaires == null || proprietaires.size() != 3) {
-            System.out.println("    Pas exactement 3 propriétaires");
+            System.out.println("Pas exactement 3 propriétaires");
             return false;
         }
         
@@ -458,11 +521,11 @@ public class Serveur {
             
             Carte carteTrouvee = trouverCarteParIDPartout(idCarte);
             if (carteTrouvee == null) {
-                System.out.println("    La carte ID " + idCarte + " n'existe plus dans le plateau");
+                System.out.println("La carte ID " + idCarte + " n'existe plus dans le plateau");
                 return false;
             }
             cartesRecherchees.add(carteTrouvee);
-            System.out.println("      Carte ID " + idCarte + " trouvée - Valeur: " + carteTrouvee.getValeur());
+            System.out.println("Carte ID " + idCarte + " trouvée - Valeur: " + carteTrouvee.getValeur());
         }
         
         
@@ -554,6 +617,16 @@ public class Serveur {
             
             triosParTour.put(nextJoueurId, 0);
             
+            if (plateau.getMillieu() != null) {
+                for (Carte c : plateau.getMillieu()) {
+                    c.setRevelee(false);
+                }
+            }
+            if (plateau.getCartesRevelees() != null) {
+                plateau.getCartesRevelees().removeIf(cr -> "MILIEU".equals(cr.getTypeRevealation()));
+            }
+            System.out.println("Cartes du milieu cachées pour tous");
+
             System.out.println(" Tour du joueur " + plateau.getJoueurActuel());
             broadcastPlateau();
         }

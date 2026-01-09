@@ -3,6 +3,7 @@ package client;
 import commun.action.*;
 import commun.plateau.*;
 import java.awt.*;
+import java.awt.event.*;
 import java.io.*;
 import java.net.Socket;
 import java.util.*;
@@ -410,9 +411,9 @@ public class TrioGUI extends JFrame {
             btn.setBorder(new LineBorder(Color.BLACK, 2));
             
             
-            if (cartesReveleesDuMilieu.contains(index)) {
+            if (cartesReveleesDuMilieu.contains(index) || c.isRevelee()) {
                 
-                btn.setText(c.getValeur() + "");
+                btn.setText("<html><center>" + c.getValeur() + "<br/>" + MATIERE_PAR_VALEUR.getOrDefault(c.getValeur(), "AP4A") + "</center></html>");
                 btn.setBackground(getCouleurCarte(c));
             }
             
@@ -647,6 +648,16 @@ public class TrioGUI extends JFrame {
         afficherLog(" Carte milieu révélée: " + carte.getValeur() + " (" + carte.getCouleur() + ")");
         mettreAJourBoutons();
         afficherMilieu();  
+        
+        // Notify server to reveal this centre card publicly so others can use it
+        try {
+            ActionRevealCarte ar = new ActionRevealCarte(monID, -1, carte, "MILIEU");
+            out.writeObject(ar);
+            out.flush();
+            afficherLog("Révélation au serveur envoyée pour la carte du milieu: " + carte.getValeur());
+        } catch (IOException e) {
+            afficherLog("Erreur en envoyant la révélation: " + e.getMessage());
+        }
     }
 
     
@@ -761,8 +772,59 @@ public class TrioGUI extends JFrame {
         btn.setBackground(getCouleurCarte(c));
         btn.setForeground(Color.WHITE);
         btn.setOpaque(true);
-        btn.setBorder(new LineBorder(Color.BLACK, 2));
-        return btn;
+        btn.setBorder(new LineBorder(Color.BLACK, 2));        btn.setToolTipText("Clic droit pour révéler cette carte (si elle est dans ta main)");
+        btn.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent me) {
+                if (SwingUtilities.isRightMouseButton(me)) {
+                    // Only allow reveal if this card is in our hand
+                    if (monJoueur == null || monJoueur.getDeck() == null) {
+                        afficherLog("Impossible de révéler: données de la main indisponibles");
+                        return;
+                    }
+                    boolean inHand = false;
+                    for (Carte cc : monJoueur.getDeck()) {
+                        if (cc.getId() == c.getId()) { inHand = true; break; }
+                    }
+                    if (!inHand) {
+                        afficherLog("La carte doit être dans ta main pour la révéler");
+                        return;
+                    }
+                    if (plateauActuel == null || plateauActuel.getJoueurActuel() != monID) {
+                        afficherLog("Ce n'est pas ton tour!");
+                        return;
+                    }
+                    int revelees = 0;
+                    if (plateauActuel.getCartesRevelees() != null) {
+                        for (CarteRevealee cr : plateauActuel.getCartesRevelees()) {
+                            if (cr.getIdProprietaire() == monID) revelees++;
+                        }
+                    }
+                    if (revelees >= 3) {
+                        afficherLog("Tu as déjà 3 cartes révélées!");
+                        return;
+                    }
+                    // ensure not already revealed
+                    if (plateauActuel.getCartesRevelees() != null) {
+                        for (CarteRevealee cr : plateauActuel.getCartesRevelees()) {
+                            if (cr.getCarte().getId() == c.getId()) {
+                                afficherLog("Cette carte est déjà révélée!");
+                                return;
+                            }
+                        }
+                    }
+                    // send reveal action to server
+                    try {
+                        ActionRevealCarte ar = new ActionRevealCarte(monID, monID, c, "MANUEL");
+                        out.writeObject(ar);
+                        out.flush();
+                        afficherLog("Révélation envoyée : " + c.getValeur());
+                    } catch (IOException ex) {
+                        afficherLog("Erreur en envoyant la révélation: " + ex.getMessage());
+                    }
+                }
+            }
+        });        return btn;
     }
 
     
