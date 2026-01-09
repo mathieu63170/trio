@@ -1,0 +1,30 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Java: build (javac)",
+      "type": "shell",
+      "command": "Remove-Item -Recurse -Force build\\classes\\*; $files=(Get-ChildItem -Recurse -Filter *.java | ForEach-Object { $_.FullName }); javac --release 17 -encoding UTF-8 -d build\\classes $files",
+      "problemMatcher": [
+        "$javac"
+      ],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "Run Server",
+      "type": "shell",
+      "command": "Start-Process -NoNewWindow -FilePath java -ArgumentList '-cp','build\\classes','serveur.Serveur','5000' -WindowStyle Hidden",
+      "presentation": {
+        "reveal": "silent",
+        "panel": "dedicated"
+      }
+    }
+  ]
+}

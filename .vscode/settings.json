@@ -1,0 +1,11 @@
+{
+  "files.encoding": "utf8",
+  "files.autoGuessEncoding": false,
+  "java.format.settings.url": "",
+  "java.configuration.runtimes": [
+    {
+      "name": "JavaSE-17",
+      "path": "C:\\Program Files\\Eclipse Adoptium\\jdk-17"
+    }
+  ]
+}
