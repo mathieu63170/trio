@@ -1,25 +1,19 @@
 package commun.plateau;
 import java.io.Serializable;
 
-/**
- * Classe Carte : représente une unique carte du jeu Trio
- * Une carte possède 4 attributs : valeur, forme, couleur, remplissage
- * Chaque carte a un ID unique pour la différencier d'une autre carte identique
- */
+
 public class Carte implements Serializable {
     private static final long serialVersionUID = 1L;
-    private static int nextId = 1;  // Compteur pour générer des IDs uniques
+    private static int nextId = 1;  
     
-    private int id;                  // ID unique pour chaque carte
-    private int valeur;              // 1, 2 ou 3 (nombre de symboles)
-    private Forme forme;             // CERCLE, CARRE, ONDULATION
-    private Couleur couleur;         // ROUGE, VERT, VIOLET
-    private Remplissage remplissage; // PLEIN, VIDE, RAYE
-    private boolean revelee;         // Si la carte est révélée
+    private int id;                  
+    private int valeur;              
+    private Forme forme;             
+    private Couleur couleur;         
+    private Remplissage remplissage; 
+    private boolean revelee;         
 
-    /**
-     * Constructeur complet
-     */
+    
     public Carte(int valeur, Forme forme, Couleur couleur, Remplissage remplissage) {
         this.id = nextId++;
         this.valeur = valeur;
@@ -29,7 +23,7 @@ public class Carte implements Serializable {
         this.revelee = false;
     }
 
-    // Getters et Setters
+    
     public int getId() {
         return id;
     }
@@ -74,24 +68,18 @@ public class Carte implements Serializable {
         this.revelee = revelee;
     }
 
-    /**
-     * Retourne une représentation textuelle de la carte
-     */
+    
     @Override
     public String toString() {
         return valeur + " " + forme.getSymbole() + " " + couleur.getEmoji() + " " + remplissage.getSymbole();
     }
 
-    /**
-     * Affichage détaillé
-     */
+    
     public String getDetails() {
         return valeur + " " + forme.getNom() + " " + couleur.getNom() + " " + remplissage.getNom();
     }
 
-    /**
-     * Deux cartes sont égales si elles ont les mêmes attributs
-     */
+    
     @Override
     public boolean equals(Object obj) {
         if (this == obj) return true;
@@ -104,9 +92,7 @@ public class Carte implements Serializable {
                remplissage == autre.remplissage;
     }
 
-    /**
-     * Hash basé sur les attributs
-     */
+    
     @Override
     public int hashCode() {
         return java.util.Objects.hash(valeur, forme, couleur, remplissage);

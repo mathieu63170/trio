@@ -4,16 +4,18 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
+// Représente l'état du jeu : joueurs, cartes au milieu et cartes révélées
 public class Plateau implements Serializable {
     private static final long serialVersionUID = 1L; 
     private List<Joueur> joueurs;
     private List<Carte> millieu;
-    private List<CarteRevealee> cartesRevelees;  // Cartes révélées publiquement (MAX/MIN)
+    private List<CarteRevealee> cartesRevelees;  
     private int joueurActuel;
-    private int etapeJoueurActuel;  // Compteur d'étapes du joueur actuel (0-3)
+    private int etapeJoueurActuel;  
     private Phase phaseActuelle;
     private int gagnant;
 
+    // Constructeur : initialise l'état du plateau au début d'une manche
     public Plateau(List<Joueur> joueurs, List<Carte> millieu, int joueurActuel, 
                    Phase phaseActuelle, int gagnant) {
         this.joueurs = joueurs;
@@ -25,7 +27,7 @@ public class Plateau implements Serializable {
         this.gagnant = gagnant;
     }
 
-    // --- GETTERS & SETTERS (Standards) ---
+    
     public List<Joueur> getJoueurs() { return joueurs; }
     public void setJoueurs(List<Joueur> joueurs) { this.joueurs = joueurs; }
     
@@ -47,14 +49,12 @@ public class Plateau implements Serializable {
     public int getGagnant() { return gagnant; }
     public void setGagnant(int gagnant) { this.gagnant = gagnant; }
 
-    /**
-     * Récupère toutes les cartes actuellement révélées sur tout le plateau
-     * (Mains des joueurs + Milieu)
-     */
+    
+    // Retourne toutes les cartes actuellement révélées (joueurs + milieu)
     public List<Carte> getCarteRevelee(){
         List<Carte> liste = new ArrayList<>();
         
-        // 1. Chercher dans les mains des joueurs
+        
         if (joueurs != null) {
             for(Joueur j : joueurs){
                 for(Carte c : j.getDeck()){
@@ -65,7 +65,7 @@ public class Plateau implements Serializable {
             }
         }
         
-        // 2. Chercher dans le milieu (Correction importante)
+        
         if (millieu != null) {
             for(Carte c : millieu){
                 if(c.isRevelee()){

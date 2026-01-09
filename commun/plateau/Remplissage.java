@@ -2,9 +2,7 @@ package commun.plateau;
 
 import java.io.Serializable;
 
-/**
- * Énumération des types de remplissage possibles pour les cartes du jeu Trio
- */
+
 public enum Remplissage implements Serializable {
     PLEIN("Plein", "##"),
     VIDE("Vide", "--"),

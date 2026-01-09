@@ -7,20 +7,24 @@ import java.net.Socket;
 import java.util.*;
 import javax.swing.*;
 
-/**
- * ClientTrioGUI - Interface graphique complète pour le jeu Trio
- * Gère la connexion au serveur et l'affichage du jeu avec Swing
- */
+
+// Interface client simple pour se connecter et jouer (explications pour étudiants)
 public class ClientTrioGUI extends JFrame {
     private static final long serialVersionUID = 1L;
+    // Matières par valeur — permet de changer la matière pour chaque valeur facilement
+    private static final Map<Integer, String> MATIERE_PAR_VALEUR = Map.of(
+        1, "AP4B",
+        2, "AP4C",
+        3, "AP4D"
+    );
     
-    // Composants de connexion
+    
     private JTextField hostField;
     private JTextField portField;
     private JButton connectButton;
     private JPanel connectionPanel;
     
-    // Composants du jeu
+    
     private JPanel gamePanel;
     private CartePanel[] cartesMilieuPanels;
     private JPanel mesCartesPanelUI;
@@ -38,25 +42,25 @@ public class ClientTrioGUI extends JFrame {
     private JLabel labelSelection;
     private JTextArea textAreaInfo;
     
-    // Client socket et communication
+    
     private Socket socket;
     private ObjectOutputStream out;
     private ObjectInputStream in;
     private ClientReceiver clientReceiver;
     private Thread receiverThread;
     
-    // Données du jeu
+    
     private Plateau plateauActuel;
-    private List<Integer> cartesSelectionnees;  // Indices des cartes du milieu sélectionnées
-    private Set<Integer> cartesMostRevealedFromHand;  // Indices des cartes de la main révélées
-    private Map<Integer, Carte> cartesReveleesAdversaires;  // ID adversaire -> Carte révélée
-    private Map<Integer, Integer> proprietairesCartesRevele; // Indice de carte révélée -> ID du propriétaire
+    private List<Integer> cartesSelectionnees;  
+    private Set<Integer> cartesMostRevealedFromHand;  
+    private Map<Integer, Carte> cartesReveleesAdversaires;  
+    private Map<Integer, Integer> proprietairesCartesRevele; 
     private Joueur monJoueur;
     private List<Joueur> autresJoueurs;
     private int monID;
     private boolean jeuEnCours;
     private int cartePersSelectionnee = -1;
-    private String modeAction = null;  // "trio", "milieu", "max", "min", "pers"
+    private String modeAction = null;  
     
     public ClientTrioGUI() {
         super("Trio - Client");
@@ -76,23 +80,20 @@ public class ClientTrioGUI extends JFrame {
         setVisible(true);
     }
     
-    /**
-     * Définit le serveur (pour test automatisé)
-     */
+    
+    // Définit l'adresse du serveur (champ UI)
     public void setHost(String host) {
         hostField.setText(host);
     }
     
-    /**
-     * Définit le port (pour test automatisé)
-     */
+    
+    // Définit le port du serveur (champ UI)
     public void setPort(int port) {
         portField.setText(String.valueOf(port));
     }
     
-    /**
-     * Interface de connexion initiale
-     */
+    
+    // Crée les champs et boutons pour se connecter au serveur
     private void initConnectionUI() {
         connectionPanel = new JPanel();
         connectionPanel.setLayout(new java.awt.GridBagLayout());
@@ -101,7 +102,7 @@ public class ClientTrioGUI extends JFrame {
         java.awt.GridBagConstraints gbc = new java.awt.GridBagConstraints();
         gbc.insets = new java.awt.Insets(10, 10, 10, 10);
         
-        // Titre
+        
         JLabel titleLabel = new JLabel("Connexion au Serveur Trio", SwingConstants.CENTER);
         titleLabel.setFont(new java.awt.Font("Arial", java.awt.Font.BOLD, 24));
         gbc.gridx = 0;
@@ -109,7 +110,7 @@ public class ClientTrioGUI extends JFrame {
         gbc.gridwidth = 2;
         connectionPanel.add(titleLabel, gbc);
         
-        // Host
+        
         gbc.gridwidth = 1;
         gbc.gridy = 1;
         gbc.gridx = 0;
@@ -119,7 +120,7 @@ public class ClientTrioGUI extends JFrame {
         gbc.gridx = 1;
         connectionPanel.add(hostField, gbc);
         
-        // Port
+        
         gbc.gridx = 0;
         gbc.gridy = 2;
         connectionPanel.add(new JLabel("Port:"), gbc);
@@ -128,7 +129,7 @@ public class ClientTrioGUI extends JFrame {
         gbc.gridx = 1;
         connectionPanel.add(portField, gbc);
         
-        // Bouton connexion
+        
         connectButton = new JButton("Se Connecter");
         connectButton.setFont(new java.awt.Font("Arial", java.awt.Font.BOLD, 14));
         gbc.gridx = 0;
@@ -141,9 +142,8 @@ public class ClientTrioGUI extends JFrame {
         add(connectionPanel);
     }
     
-    /**
-     * Établit la connexion au serveur
-     */
+    
+    // Ouvre une connexion au serveur et initialise les flux
     private void connecterAuServeur() {
         String host = hostField.getText();
         int port = Integer.parseInt(portField.getText());
@@ -154,25 +154,25 @@ public class ClientTrioGUI extends JFrame {
             out.flush();
             in = new ObjectInputStream(socket.getInputStream());
             
-            afficherMessage("✓ Connecté au serveur " + host + ":" + port);
+            afficherMessage(" Connecté au serveur " + host + ":" + port);
             
-            // Recevoir l'ID du client
+            
             Object msgReception = in.readObject();
             if (msgReception instanceof String) {
                 String msg = (String) msgReception;
                 if (msg.startsWith("ID:")) {
                     monID = Integer.parseInt(msg.substring(3));
-                    afficherMessage("✓ ID attribué: " + monID);
+                    afficherMessage(" ID attribué: " + monID);
                 }
             }
             
-            // Démarrer le thread de réception
+            
             clientReceiver = new ClientReceiver();
             receiverThread = new Thread(clientReceiver);
             receiverThread.setDaemon(true);
             receiverThread.start();
             
-            // Passer à l'interface de jeu
+            
             remove(connectionPanel);
             initGameUI();
             revalidate();
@@ -185,15 +185,14 @@ public class ClientTrioGUI extends JFrame {
         }
     }
     
-    /**
-     * Initialise l'interface du jeu
-     */
+    
+    // Prépare l'interface de jeu après la connexion
     private void initGameUI() {
         gamePanel = new JPanel();
         gamePanel.setLayout(new java.awt.BorderLayout(10, 10));
         gamePanel.setBackground(new java.awt.Color(34, 139, 34));
         
-        // --- PANEL HAUT (Infos) ---
+        
         JPanel topPanel = new JPanel();
         topPanel.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 20, 10));
         topPanel.setBackground(new java.awt.Color(220, 220, 220));
@@ -212,7 +211,7 @@ public class ClientTrioGUI extends JFrame {
         
         gamePanel.add(topPanel, java.awt.BorderLayout.NORTH);
         
-        // --- PANEL CENTRE (Cartes du milieu) ---
+        
         JPanel centrePanel = new JPanel();
         centrePanel.setLayout(new java.awt.GridLayout(3, 3, 15, 15));
         centrePanel.setBackground(new java.awt.Color(34, 139, 34));
@@ -232,34 +231,34 @@ public class ClientTrioGUI extends JFrame {
         
         gamePanel.add(centrePanel, java.awt.BorderLayout.CENTER);
         
-        // --- PANEL BAS (Boutons et mes cartes) ---
+        
         JPanel bottomPanel = new JPanel();
         bottomPanel.setLayout(new java.awt.BorderLayout(10, 10));
         bottomPanel.setBackground(new java.awt.Color(200, 200, 200));
         bottomPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         
-        // === PANEL ACTIONS (TOP du bottom) ===
+        
         JPanel actionsTopPanel = new JPanel();
         actionsTopPanel.setLayout(new java.awt.BorderLayout(5, 5));
         actionsTopPanel.setBackground(new java.awt.Color(200, 200, 200));
         
-        // Label instructions
+        
         labelSelection = new JLabel("Sélectionnez une action et cliquez sur une carte du milieu");
         labelSelection.setFont(new java.awt.Font("Arial", java.awt.Font.BOLD, 11));
         labelSelection.setForeground(new java.awt.Color(0, 0, 150));
         actionsTopPanel.add(labelSelection, java.awt.BorderLayout.NORTH);
         
-        // === Ligne 1: Actions trio et milieu ===
+        
         JPanel actionRow1 = new JPanel();
         actionRow1.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 10, 5));
         actionRow1.setBackground(new java.awt.Color(200, 200, 200));
         
-        btnVerifierTrio = new JButton("📋 Vérifier Trio (3)");
+        btnVerifierTrio = new JButton(" Vérifier Trio (3)");
         btnVerifierTrio.setFont(new java.awt.Font("Arial", java.awt.Font.BOLD, 11));
         btnVerifierTrio.setEnabled(false);
         btnVerifierTrio.addActionListener(e -> {
-            // Comportement dynamique: si 3 cartes sélectionnées, envoyer le trio
-            // Sinon, activer le mode trio
+            
+            
             int totalCartes = cartesSelectionnees.size() + cartesMostRevealedFromHand.size() + cartesReveleesAdversaires.size();
             if (totalCartes == 3 && modeAction != null && modeAction.equals("trio")) {
                 verifierTrio();
@@ -269,14 +268,14 @@ public class ClientTrioGUI extends JFrame {
         });
         actionRow1.add(btnVerifierTrio);
         
-        btnAnnulerSelection = new JButton("❌ Annuler");
+        btnAnnulerSelection = new JButton(" Annuler");
         btnAnnulerSelection.setFont(new java.awt.Font("Arial", java.awt.Font.BOLD, 11));
         btnAnnulerSelection.addActionListener(e -> annulerSelection());
         actionRow1.add(btnAnnulerSelection);
         
         actionsTopPanel.add(actionRow1, java.awt.BorderLayout.CENTER);
         
-        // === Ligne 2: Actions autres joueurs ===
+        
         JPanel actionRow2 = new JPanel();
         actionRow2.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 10, 5));
         actionRow2.setBackground(new java.awt.Color(200, 200, 200));
@@ -287,17 +286,17 @@ public class ClientTrioGUI extends JFrame {
         joueursCibleCombo.setFont(new java.awt.Font("Arial", java.awt.Font.PLAIN, 11));
         actionRow2.add(joueursCibleCombo);
         
-        btnDemanderMax = new JButton("📈 + Grande");
+        btnDemanderMax = new JButton(" + Grande");
         btnDemanderMax.setFont(new java.awt.Font("Arial", java.awt.Font.BOLD, 11));
         btnDemanderMax.addActionListener(e -> demanderMax());
         actionRow2.add(btnDemanderMax);
         
-        btnDemanderMin = new JButton("📉 + Petite");
+        btnDemanderMin = new JButton(" + Petite");
         btnDemanderMin.setFont(new java.awt.Font("Arial", java.awt.Font.BOLD, 11));
         btnDemanderMin.addActionListener(e -> demanderMin());
         actionRow2.add(btnDemanderMin);
         
-        btnAfficherAutresJoueurs = new JButton("👁️ Voir Cartes");
+        btnAfficherAutresJoueurs = new JButton("️ Voir Cartes");
         btnAfficherAutresJoueurs.setFont(new java.awt.Font("Arial", java.awt.Font.BOLD, 11));
         btnAfficherAutresJoueurs.addActionListener(e -> demanderCartesAutresJoueurs());
         actionRow2.add(btnAfficherAutresJoueurs);
@@ -306,13 +305,13 @@ public class ClientTrioGUI extends JFrame {
         
         bottomPanel.add(actionsTopPanel, java.awt.BorderLayout.NORTH);
         
-        // Mes cartes
+        
         mesCartesPanelUI = new JPanel();
         mesCartesPanelUI.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 10, 5));
         mesCartesPanelUI.setBackground(new java.awt.Color(200, 200, 200));
         mesCartesPanelUI.setBorder(BorderFactory.createTitledBorder("Mes Cartes"));
         
-        // Autres joueurs
+        
         autrJoueursPanelUI = new JPanel();
         autrJoueursPanelUI.setLayout(new BoxLayout(autrJoueursPanelUI, BoxLayout.Y_AXIS));
         autrJoueursPanelUI.setBackground(new java.awt.Color(200, 200, 200));
@@ -331,7 +330,7 @@ public class ClientTrioGUI extends JFrame {
         
         gamePanel.add(bottomPanel, java.awt.BorderLayout.SOUTH);
         
-        // --- PANEL DROIT (Info et logs) ---
+        
         JPanel rightPanel = new JPanel();
         rightPanel.setLayout(new java.awt.BorderLayout(5, 5));
         rightPanel.setBackground(new java.awt.Color(220, 220, 220));
@@ -352,30 +351,29 @@ public class ClientTrioGUI extends JFrame {
         add(gamePanel);
     }
     
-    /**
-     * Sélectionne/désélectionne une carte du milieu
-     */
+    
+    // Gère la sélection d'une carte au milieu (interface utilisateur)
     private void selectionnerCarte(int index) {
         if (plateauActuel == null || index >= plateauActuel.getMillieu().size()) {
             return;
         }
         
-        // Si aucun mode action activé, prendre la carte du milieu
+        
         if (modeAction == null || modeAction.isEmpty()) {
             try {
-                // Envoyer l'action pour prendre la carte du milieu
+                
                 commun.action.Action action = new ActionMillieu(monID, index);
                 out.writeObject(action);
                 out.flush();
-                afficherMessage("📤 Carte du milieu (index: " + index + ") prise");
+                afficherMessage(" Carte du milieu (index: " + index + ") prise");
             } catch (IOException e) {
-                afficherMessage("❌ Erreur lors de la prise de carte: " + e.getMessage());
+                afficherMessage(" Erreur lors de la prise de carte: " + e.getMessage());
             }
             return;
         }
         
         if (modeAction.equals("trio")) {
-            // Mode trio: sélectionner jusqu'à 3 cartes
+            
             if (cartesSelectionnees.contains(index)) {
                 cartesSelectionnees.remove((Integer) index);
             } else {
@@ -389,27 +387,25 @@ public class ClientTrioGUI extends JFrame {
         }
     }
     
-    /**
-     * Active un mode d'action
-     */
+    
+    // Active un mode d'action ("trio", "milieu", "max", "min")
     private void activerModeAction(String mode) {
         modeAction = mode;
         cartesSelectionnees.clear();
         
         if (mode.equals("trio")) {
-            labelSelection.setText("📋 Mode TRIO : Sélectionnez 3 cartes du milieu et cliquez sur une");
+            labelSelection.setText(" Mode TRIO : Sélectionnez 3 cartes du milieu et cliquez sur une");
             labelSelection.setForeground(new java.awt.Color(0, 0, 200));
         } else if (mode.equals("milieu")) {
-            labelSelection.setText("🎯 Mode MILIEU : Cliquez sur la carte que vous voulez prendre");
+            labelSelection.setText(" Mode MILIEU : Cliquez sur la carte que vous voulez prendre");
             labelSelection.setForeground(new java.awt.Color(200, 100, 0));
         }
         
         updateCartesPanels();
     }
     
-    /**
-     * Annule la sélection actuelle
-     */
+    
+    // Annule la sélection courante et réinitialise l'interface
     private void annulerSelection() {
         cartesSelectionnees.clear();
         modeAction = null;
@@ -420,25 +416,23 @@ public class ClientTrioGUI extends JFrame {
         updateButtonsState();
     }
     
-    /**
-     * Prend une carte du milieu
-     */
+    
+    // Envoie une action pour prendre une carte du milieu au serveur
     private void prendreCarteMillieu(int index) {
         try {
             commun.action.Action action = new ActionMillieu(monID, index);
             out.writeObject(action);
             out.flush();
-            afficherMessage("📤 Prise de carte milieu envoyée (index: " + index + ")");
+            afficherMessage(" Prise de carte milieu envoyée (index: " + index + ")");
         } catch (IOException e) {
-            afficherMessage("❌ Erreur: " + e.getMessage());
+            afficherMessage(" Erreur: " + e.getMessage());
         }
     }
     
-    /**
-     * Vérifie le trio sélectionné
-     */
+    
+    // Vérifie les cartes sélectionnées et envoie une tentative de TRIO
     private void verifierTrio() {
-        // Sécurité: réinitialiser les sélections invalides
+        
         cartesSelectionnees.removeIf(idx -> idx >= plateauActuel.getMillieu().size());
         
         int totalCartes = cartesSelectionnees.size() + cartesMostRevealedFromHand.size() + cartesReveleesAdversaires.size();
@@ -450,50 +444,50 @@ public class ClientTrioGUI extends JFrame {
         try {
             List<Integer> idsCartes = new ArrayList<>();
             List<Integer> proprietaires = new ArrayList<>();
-            List<Carte> cartesDebug = new ArrayList<>();  // Pour affichage seulement
+            List<Carte> cartesDebug = new ArrayList<>();  
             
-            // 1. Ajouter les IDs des cartes du milieu sélectionnées (propriétaire = -1 pour milieu)
+            
             for (Integer idx : cartesSelectionnees) {
                 if (idx >= 0 && idx < plateauActuel.getMillieu().size()) {
                     Carte carte = plateauActuel.getMillieu().get(idx);
                     idsCartes.add(carte.getId());
-                    proprietaires.add(-1);  // -1 = carte du milieu
+                    proprietaires.add(-1);  
                     cartesDebug.add(carte);
                 } else {
-                    afficherMessage("⚠️  Index de carte invalide: " + idx + " (milieu: " + plateauActuel.getMillieu().size() + ")");
+                    afficherMessage("️  Index de carte invalide: " + idx + " (milieu: " + plateauActuel.getMillieu().size() + ")");
                 }
             }
             
-            // 2. Ajouter les IDs des cartes de la main révélées (propriétaire = monID)
+            
             if (monJoueur != null && monJoueur.getDeck() != null) {
                 int handIdx = 0;
                 for (Carte carte : monJoueur.getDeck()) {
                     if (cartesMostRevealedFromHand.contains(handIdx)) {
                         idsCartes.add(carte.getId());
-                        proprietaires.add(monID);  // Propriétaire = moi
+                        proprietaires.add(monID);  
                         cartesDebug.add(carte);
                     }
                     handIdx++;
                 }
             }
             
-            // 3. Ajouter les IDs des cartes révélées des adversaires (propriétaire = l'ID de l'adversaire)
+            
             for (Map.Entry<Integer, Carte> entry : cartesReveleesAdversaires.entrySet()) {
                 int indexRevel = entry.getKey();
                 Carte carteRevel = entry.getValue();
                 idsCartes.add(carteRevel.getId());
                 int idProprietaire = proprietairesCartesRevele.get(indexRevel);
-                proprietaires.add(idProprietaire);  // Propriétaire = l'adversaire d'origine
+                proprietaires.add(idProprietaire);  
                 cartesDebug.add(carteRevel);
             }
             
             if (idsCartes.size() != 3) {
-                afficherMessage("❌ Sélectionnez exactement 3 cartes (seulement " + idsCartes.size() + " sélectionnées)");
+                afficherMessage(" Sélectionnez exactement 3 cartes (seulement " + idsCartes.size() + " sélectionnées)");
                 return;
             }
             
-            // ✅ VIDER LES SÉLECTIONS IMMÉDIATEMENT APRÈS LES AVOIR COPIÉES
-            // Ceci AVANT l'envoi, pour éviter une race condition
+            
+            
             cartesSelectionnees.clear();
             cartesMostRevealedFromHand.clear();
             cartesReveleesAdversaires.clear();
@@ -501,40 +495,39 @@ public class ClientTrioGUI extends JFrame {
             modeAction = null;
             cartePersSelectionnee = -1;
             
-            // Créer l'action AVEC les IDs (pas les cartes!)
+            
             ActionTrio action = new ActionTrio(monID, idsCartes, proprietaires);
             
-            // Afficher les détails des cartes envoyées (pour debug)
-            afficherMessage("📋 === TRIO À ENVOYER ===");
+            
+            afficherMessage(" === TRIO À ENVOYER ===");
             for (int i = 0; i < cartesDebug.size(); i++) {
                 Carte carte = cartesDebug.get(i);
                 int prop = proprietaires.get(i);
                 String source = (prop == -1) ? "MILIEU" : (prop == monID) ? "MA MAIN" : "Joueur " + prop;
                 afficherMessage("   Carte " + (i + 1) + ": Valeur=" + carte.getValeur() + " | ID=" + carte.getId() + " | Source=" + source);
             }
-            afficherMessage("📋 =====================");
+            afficherMessage(" =====================");
             
-            // Envoyer au serveur (les sélections sont déjà vides!)
+            
             out.writeObject(action);
             out.flush();
             
-            afficherMessage("📤 Trio envoyé au serveur: " + idsCartes.size() + " cartes");
+            afficherMessage(" Trio envoyé au serveur: " + idsCartes.size() + " cartes");
             
-            // Mettre à jour l'UI
+            
             updateCartesPanels();
             updateButtonsState();
             
         } catch (IOException e) {
-            afficherMessage("❌ Erreur lors de l'envoi: " + e.getMessage());
+            afficherMessage(" Erreur lors de l'envoi: " + e.getMessage());
         }
     }
     
-    /**
-     * Demande la plus grande carte d'un adversaire
-     */
+    
+    // Demande la carte la plus élevée à un adversaire (MAX)
     private void demanderMax() {
         if (joueursCibleCombo.getSelectedIndex() < 0) {
-            afficherMessage("⚠️ Sélectionnez un adversaire");
+            afficherMessage("️ Sélectionnez un adversaire");
             return;
         }
         
@@ -542,7 +535,7 @@ public class ClientTrioGUI extends JFrame {
         int idCible = Integer.parseInt(selected.replaceAll("\\D", ""));
         
         if (idCible == monID) {
-            afficherMessage("⚠️ Vous ne pouvez pas demander votre propre carte!");
+            afficherMessage("️ Vous ne pouvez pas demander votre propre carte!");
             return;
         }
         
@@ -550,18 +543,17 @@ public class ClientTrioGUI extends JFrame {
             commun.action.Action action = new ActionMax(monID, idCible);
             out.writeObject(action);
             out.flush();
-            afficherMessage("📤 Demande de + grande carte au joueur " + idCible);
+            afficherMessage(" Demande de + grande carte au joueur " + idCible);
         } catch (IOException e) {
-            afficherMessage("❌ Erreur: " + e.getMessage());
+            afficherMessage(" Erreur: " + e.getMessage());
         }
     }
     
-    /**
-     * Demande la plus petite carte d'un adversaire
-     */
+    
+    // Demande la carte la plus basse à un adversaire (MIN)
     private void demanderMin() {
         if (joueursCibleCombo.getSelectedIndex() < 0) {
-            afficherMessage("⚠️ Sélectionnez un adversaire");
+            afficherMessage("️ Sélectionnez un adversaire");
             return;
         }
         
@@ -569,7 +561,7 @@ public class ClientTrioGUI extends JFrame {
         int idCible = Integer.parseInt(selected.replaceAll("\\D", ""));
         
         if (idCible == monID) {
-            afficherMessage("⚠️ Vous ne pouvez pas demander votre propre carte!");
+            afficherMessage("️ Vous ne pouvez pas demander votre propre carte!");
             return;
         }
         
@@ -577,28 +569,26 @@ public class ClientTrioGUI extends JFrame {
             commun.action.Action action = new ActionMin(monID, idCible);
             out.writeObject(action);
             out.flush();
-            afficherMessage("📤 Demande de + petite carte au joueur " + idCible);
+            afficherMessage(" Demande de + petite carte au joueur " + idCible);
         } catch (IOException e) {
-            afficherMessage("❌ Erreur: " + e.getMessage());
+            afficherMessage(" Erreur: " + e.getMessage());
         }
     }
     
-    /**
-     * Demande les cartes des autres joueurs
-     */
+    
+    // Demande au serveur les cartes des autres joueurs pour affichage
     private void demanderCartesAutresJoueurs() {
         try {
             out.writeObject("GET_OTHER_PLAYERS_CARDS");
             out.flush();
-            afficherMessage("📤 Demande des cartes des autres joueurs envoyée");
+            afficherMessage(" Demande des cartes des autres joueurs envoyée");
         } catch (IOException e) {
-            afficherMessage("❌ Erreur: " + e.getMessage());
+            afficherMessage(" Erreur: " + e.getMessage());
         }
     }
     
-    /**
-     * Met à jour l'affichage des cartes du milieu
-     */
+    
+    // Met à jour l'affichage des cartes (milieu et main du joueur)
     private void updateCartesPanels() {
         if (plateauActuel == null) return;
         
@@ -612,20 +602,20 @@ public class ClientTrioGUI extends JFrame {
             }
         }
         
-        // Afficher mes cartes (de la main) - CLIQUABLES ET REVEALABLES
+        
         if (monJoueur != null) {
             mesCartesPanelUI.removeAll();
             int handIdx = 0;
             for (Carte carte : monJoueur.getDeck()) {
                 boolean isRevealed = cartesMostRevealedFromHand.contains(handIdx);
                 
-                JButton btnCarte = new JButton(carte.getValeur() + "");
+                JButton btnCarte = new JButton("<html><div style='text-align:center;'>" + carte.getValeur() + "<br/>" + MATIERE_PAR_VALEUR.getOrDefault(carte.getValeur(), "AP4A") + "</div></html>");
                 btnCarte.setFont(new java.awt.Font("Arial", java.awt.Font.BOLD, 16));
                 btnCarte.setPreferredSize(new java.awt.Dimension(50, 50));
                 
-                // Style selon état (révélée ou cachée)
+                
                 if (isRevealed) {
-                    btnCarte.setBackground(new java.awt.Color(100, 200, 100));  // Vert
+                    btnCarte.setBackground(new java.awt.Color(100, 200, 100));  
                     btnCarte.setForeground(java.awt.Color.WHITE);
                 } else {
                     btnCarte.setBackground(java.awt.Color.LIGHT_GRAY);
@@ -635,15 +625,15 @@ public class ClientTrioGUI extends JFrame {
                 
                 final int idx = handIdx;
                 btnCarte.addActionListener(e -> {
-                    // Basculer l'état révélé/caché
+                    
                     if (cartesMostRevealedFromHand.contains(idx)) {
                         cartesMostRevealedFromHand.remove(idx);
                     } else {
-                        // Max 3 cartes révélées pour le trio
+                        
                         if (cartesMostRevealedFromHand.size() < 3) {
                             cartesMostRevealedFromHand.add(idx);
                         } else {
-                            afficherMessage("⚠️  Max 3 cartes peuvent être révélées");
+                            afficherMessage("️  Max 3 cartes peuvent être révélées");
                         }
                     }
                     updateCartesPanels();
@@ -657,18 +647,18 @@ public class ClientTrioGUI extends JFrame {
             mesCartesPanelUI.repaint();
         }
         
-        // Afficher cartes des autres joueurs
+        
         updateOtherPlayersDisplay();
     }
     
-    /**
-     * Met à jour l'affichage des cartes des autres joueurs
-     */
+    
+    // Met à jour l'affichage des autres joueurs et leur statut
     private void updateOtherPlayersDisplay() {
         autrJoueursPanelUI.removeAll();
         
-        // Aussi mettre à jour le combo box des cibles
+        
         joueursCibleCombo.removeAllItems();
+        boolean cEstMonTour = (plateauActuel != null && plateauActuel.getJoueurActuel() == monID);
         
         if (autresJoueurs.isEmpty()) {
             JLabel label = new JLabel("(Cliquez sur 'Voir Cartes' pour afficher)");
@@ -676,8 +666,8 @@ public class ClientTrioGUI extends JFrame {
             autrJoueursPanelUI.add(label);
         } else {
             for (Joueur joueur : autresJoueurs) {
-                if (joueur.getId() != monID) {  // Pas afficher nos cartes deux fois
-                    // Ajouter au combo box
+                if (joueur.getId() != monID) {  
+                    
                     joueursCibleCombo.addItem("Joueur " + joueur.getId());
                     
                     JPanel playerPanel = new JPanel();
@@ -685,11 +675,12 @@ public class ClientTrioGUI extends JFrame {
                     playerPanel.setBackground(new java.awt.Color(230, 230, 230));
                     playerPanel.setBorder(BorderFactory.createTitledBorder(joueur.getNom() + " (" + joueur.getDeck().size() + " cartes)"));
                     
-                    // CORRECTION: Afficher juste le nombre de cartes, pas les valeurs!
+                    
                     JLabel countLabel = new JLabel(joueur.getDeck().size() + " carte(s) cachées");
                     countLabel.setFont(new java.awt.Font("Arial", java.awt.Font.PLAIN, 12));
                     countLabel.setOpaque(true);
-                    countLabel.setBackground(new java.awt.Color(180, 180, 180));
+                    countLabel.setBackground(new java.awt.Color(80, 80, 80));
+                    countLabel.setForeground(java.awt.Color.WHITE);
                     countLabel.setBorder(BorderFactory.createLineBorder(java.awt.Color.BLACK));
                     countLabel.setPreferredSize(new java.awt.Dimension(150, 30));
                     countLabel.setHorizontalAlignment(SwingConstants.CENTER);
@@ -705,33 +696,31 @@ public class ClientTrioGUI extends JFrame {
         updateButtonsState();
     }
     
-    /**
-     * Met à jour l'état des boutons
-     */
+    
+    // Met à jour l'état des boutons en fonction du jeu et des sélections
     private void updateButtonsState() {
-        // Bouton trio: actif si 3 cartes TOTALES (milieu + main + adversaires) sélectionnées ET jeu en cours
+        
         int totalCartes = cartesSelectionnees.size() + cartesMostRevealedFromHand.size() + cartesReveleesAdversaires.size();
         btnVerifierTrio.setEnabled(totalCartes == 3 && jeuEnCours);
         
-        // Afficher le mode actuel
+        
         if (modeAction != null && !modeAction.isEmpty()) {
             if (modeAction.equals("trio")) {
-                btnVerifierTrio.setText("📋 Vérifier Trio (" + totalCartes + "/3)");
+                btnVerifierTrio.setText(" Vérifier Trio (" + totalCartes + "/3)");
             } else {
-                btnVerifierTrio.setText("📋 Vérifier Trio");
+                btnVerifierTrio.setText(" Vérifier Trio");
             }
         } else {
-            btnVerifierTrio.setText("📋 Vérifier Trio (" + totalCartes + "/3)");
+            btnVerifierTrio.setText(" Vérifier Trio (" + totalCartes + "/3)");
         }
         
-        // Boutons max/min actifs si jeu en cours
+        
         btnDemanderMax.setEnabled(jeuEnCours && joueursCibleCombo.getItemCount() > 0);
         btnDemanderMin.setEnabled(jeuEnCours && joueursCibleCombo.getItemCount() > 0);
     }
     
-    /**
-     * Affiche un message dans la zone info
-     */
+    
+    // Ajoute un message dans la zone d'informations (thread-safe via SwingUtilities)
     private void afficherMessage(String message) {
         SwingUtilities.invokeLater(() -> {
             if (textAreaInfo != null) {
@@ -741,19 +730,18 @@ public class ClientTrioGUI extends JFrame {
         });
     }
     
-    /**
-     * Affiche l'écran de fin de partie avec le gagnant
-     */
+    
+    // Affiche l'écran de fin de partie (victoire/défaite)
     private void afficherEcranVictoire(int gannantID, String gagnantNom) {
         SwingUtilities.invokeLater(() -> {
-            // Créer un panneau pour afficher le gagnant
+            
             JPanel victoryPanel = new JPanel();
             victoryPanel.setLayout(new BoxLayout(victoryPanel, BoxLayout.Y_AXIS));
             victoryPanel.setBackground(new java.awt.Color(30, 30, 30));
             
-            // Message principal
+            
             if (gannantID == monID) {
-                JLabel victoryLabel = new JLabel("🎉 VICTOIRE! 🎉");
+                JLabel victoryLabel = new JLabel(" VICTOIRE! ");
                 victoryLabel.setFont(new java.awt.Font("Arial", java.awt.Font.BOLD, 60));
                 victoryLabel.setForeground(new java.awt.Color(0, 255, 0));
                 victoryLabel.setAlignmentX(JLabel.CENTER_ALIGNMENT);
@@ -791,19 +779,18 @@ public class ClientTrioGUI extends JFrame {
             
             victoryPanel.add(Box.createVerticalGlue());
             
-            // Remplacer le contenu de gamePanel
+            
             gamePanel.removeAll();
             gamePanel.add(victoryPanel, java.awt.BorderLayout.CENTER);
             gamePanel.revalidate();
             gamePanel.repaint();
             
-            afficherMessage("✅ Écran de victoire affiché!");
+            afficherMessage(" Écran de victoire affiché!");
         });
     }
     
-    /**
-     * Thread de réception des messages du serveur
-     */
+    
+    // Thread qui reçoit les objets envoyés par le serveur et met à jour l'UI
     private class ClientReceiver implements Runnable {
         @Override
         public void run() {
@@ -814,22 +801,22 @@ public class ClientTrioGUI extends JFrame {
                     System.out.println("[DEBUG] Attente de readObject()...");
                     Object obj = in.readObject();
                     System.out.println("[DEBUG] REÇU: " + obj.getClass().getSimpleName());
-                    afficherMessage("📨 REÇU: " + obj.getClass().getSimpleName());
+                    afficherMessage(" REÇU: " + obj.getClass().getSimpleName());
                     
                     if (obj instanceof Plateau) {
                         plateauActuel = (Plateau) obj;
                         jeuEnCours = plateauActuel.getPhaseActuelle() != Phase.FIN_PARTIE;
                         
-                        afficherMessage("📋 PLATEAU REÇU - Phase: " + plateauActuel.getPhaseActuelle());
+                        afficherMessage(" PLATEAU REÇU - Phase: " + plateauActuel.getPhaseActuelle());
                         
-                        // ✅ VÉRIFIER LA VICTOIRE
+                        
                         if (plateauActuel.getPhaseActuelle() == Phase.FIN_PARTIE) {
-                            afficherMessage("🎯 PHASE FIN_PARTIE DÉTECTÉE!");
+                            afficherMessage(" PHASE FIN_PARTIE DÉTECTÉE!");
                             int gagnantID = plateauActuel.getGagnant();
-                            afficherMessage("🎯 Gagnant ID: " + gagnantID + ", MonID: " + monID);
+                            afficherMessage(" Gagnant ID: " + gagnantID + ", MonID: " + monID);
                             String nomGagnant = "Joueur " + gagnantID;
                             
-                            // Chercher le nom du gagnant
+                            
                             if (plateauActuel.getJoueurs() != null) {
                                 for (Joueur j : plateauActuel.getJoueurs()) {
                                     if (j.getId() == gagnantID) {
@@ -841,31 +828,31 @@ public class ClientTrioGUI extends JFrame {
                             
                             final String gagnantNom = nomGagnant;
                             final int gagnantID_final = gagnantID;
-                            afficherMessage("🎯 Affichage de l'écran de fin...");
+                            afficherMessage(" Affichage de l'écran de fin...");
                             SwingUtilities.invokeLater(() -> {
-                                afficherMessage("🎯 SwingUtilities exécuté!");
+                                afficherMessage(" SwingUtilities exécuté!");
                                 afficherEcranVictoire(gagnantID_final, gagnantNom);
                             });
                         }
                         
-                        // ✅ METTRE À JOUR monJoueur AVEC LA COPIE DU PLATEAU
-                        // Ceci garantit que monJoueur reflète l'état actuel du serveur
-                        afficherMessage("🔄 PLATEAU REÇU - cherche joueur " + monID + " parmi " + (plateauActuel.getJoueurs() != null ? plateauActuel.getJoueurs().size() : "null") + " joueurs");
+                        
+                        
+                        afficherMessage(" PLATEAU REÇU - cherche joueur " + monID + " parmi " + (plateauActuel.getJoueurs() != null ? plateauActuel.getJoueurs().size() : "null") + " joueurs");
                         
                         if (plateauActuel.getJoueurs() != null) {
                             for (Joueur j : plateauActuel.getJoueurs()) {
                                 afficherMessage("   → Joueur ID: " + j.getId() + ", Nom: " + j.getNom() + ", Trios: " + (j.getTrios() != null ? j.getTrios().size() : "null"));
                                 if (j.getId() == monID) {
-                                    monJoueur = j;  // Remplacer par la copie du serveur (à jour!)
-                                    afficherMessage("   ✅ TROUVÉ! MonJoueur mis à jour");
+                                    monJoueur = j;  
+                                    afficherMessage("    TROUVÉ! MonJoueur mis à jour");
                                     break;
                                 }
                             }
                         }
                         
                         SwingUtilities.invokeLater(() -> {
-                            // Réinitialiser les sélections locales quand on reçoit un nouveau plateau
-                            // Ceci évite que les anciennes sélections soient renvoyées lors du prochain trio
+                            
+                            
                             cartesSelectionnees.clear();
                             cartesMostRevealedFromHand.clear();
                             cartesReveleesAdversaires.clear();
@@ -880,30 +867,30 @@ public class ClientTrioGUI extends JFrame {
                         
                     } else if (obj instanceof Joueur) {
                         monJoueur = (Joueur) obj;
-                        afficherMessage("✓ Données joueur reçues");
+                        afficherMessage(" Données joueur reçues");
                         
                     } else if (obj instanceof ActionRevealCarte) {
-                        // Carte révélée par demande MAX/MIN
+                        
                         ActionRevealCarte reveal = (ActionRevealCarte) obj;
                         int idSource = reveal.getIdJoueurSource();
                         Carte carteRevele = reveal.getCarte();
                         
-                        // Enregistrer la carte révélée avec son propriétaire
+                        
                         int indexCarte = cartesReveleesAdversaires.size();
                         cartesReveleesAdversaires.put(indexCarte, carteRevele);
                         proprietairesCartesRevele.put(indexCarte, idSource);
                         
-                        afficherMessage("📸 Carte révélée de Joueur " + idSource + 
+                        afficherMessage(" Carte révélée de Joueur " + idSource + 
                                        " (" + reveal.getType() + "): " + carteRevele.getValeur());
                         afficherMessage("   → Vous pouvez utiliser cette carte dans un trio");
                         
 
                     } else if (obj instanceof java.util.ArrayList) {
-                        // Reçu liste de joueurs des autres
+                        
                         @SuppressWarnings("unchecked")
                         List<Joueur> joueurs = (List<Joueur>) obj;
                         autresJoueurs = joueurs;
-                        afficherMessage("✓ Cartes de " + joueurs.size() + " autres joueur(s) reçues");
+                        afficherMessage(" Cartes de " + joueurs.size() + " autres joueur(s) reçues");
                         
                         SwingUtilities.invokeLater(() -> {
                             updateOtherPlayersDisplay();
@@ -911,27 +898,26 @@ public class ClientTrioGUI extends JFrame {
                         
                     } else if (obj instanceof String) {
                         String msg = (String) obj;
-                        afficherMessage("📨 " + msg);
+                        afficherMessage(" " + msg);
                         
                     } else {
                         afficherMessage("? Message reçu: " + obj.getClass().getSimpleName());
                     }
                 }
             } catch (EOFException e) {
-                afficherMessage("❌ Serveur fermé");
+                afficherMessage(" Serveur fermé");
             } catch (IOException | ClassNotFoundException e) {
-                afficherMessage("❌ Erreur: " + e.getMessage());
+                afficherMessage(" Erreur: " + e.getMessage());
                 e.printStackTrace();
             } catch (Exception e) {
-                afficherMessage("❌ ERREUR INCONNUE: " + e.getClass().getSimpleName() + " - " + e.getMessage());
+                afficherMessage(" ERREUR INCONNUE: " + e.getClass().getSimpleName() + " - " + e.getMessage());
                 e.printStackTrace();
             }
         }
     }
     
-    /**
-     * Met à jour les labels d'information
-     */
+    
+    // Met à jour les labels d'information (phase, score, joueur actuel)
     private void updateInfoLabels() {
         if (plateauActuel == null) return;
         
@@ -940,14 +926,12 @@ public class ClientTrioGUI extends JFrame {
         if (monJoueur != null) {
             labelJoueurActuel.setText("Joueur: " + monJoueur.getNom());
             int trios = monJoueur.getTrios().size();
-            afficherMessage("📊 UPDATE LABELS: Joueur " + monJoueur.getId() + " a " + trios + " trio(s)");
+            afficherMessage(" UPDATE LABELS: Joueur " + monJoueur.getId() + " a " + trios + " trio(s)");
             labelScore.setText("Trios: " + trios);
         }
     }
     
-    /**
-     * Classe interne pour afficher une carte du milieu
-     */
+    
     private class CartePanel extends JPanel {
         private Carte carte;
         private boolean selected;
@@ -978,15 +962,15 @@ public class ClientTrioGUI extends JFrame {
             
             java.awt.Graphics2D g2d = (java.awt.Graphics2D) g;
             
-            // Couleur de fond selon sélection
+            
             if (selected) {
-                setBackground(new java.awt.Color(200, 255, 200));  // Vert clair
+                setBackground(new java.awt.Color(200, 255, 200));  
             } else {
                 setBackground(java.awt.Color.WHITE);
             }
             super.paintComponent(g2d);
             
-            // Afficher la valeur de la carte
+            
             g2d.setFont(new java.awt.Font("Arial", java.awt.Font.BOLD, 28));
             g2d.setColor(java.awt.Color.BLACK);
             String texte = String.valueOf(carte.getValeur());
@@ -995,7 +979,7 @@ public class ClientTrioGUI extends JFrame {
             int y = ((getHeight() - fm.getHeight()) / 2) + fm.getAscent();
             g2d.drawString(texte, x, y);
             
-            // Afficher la couleur
+            
             String couleurTexte = carte.getCouleur().toString().substring(0, 1);
             java.awt.Color couleur = switch(carte.getCouleur()) {
                 case ROUGE -> java.awt.Color.RED;

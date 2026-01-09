@@ -14,21 +14,19 @@ public class StatutJeu {
 
     private Plateau plateau;
     private final Regle regle;
-    private final List<ObjectOutputStream> clientsOutput; // Pour envoyer les infos aux joueurs
-    private final Object plateauLock = new Object(); // Lock pour synchronisation thread-safe
+    private final List<ObjectOutputStream> clientsOutput; 
+    private final Object plateauLock = new Object(); 
 
     public StatutJeu() {
         this.regle = new Regle();
         this.clientsOutput = new ArrayList<>();
     }
 
-    /**
-     * Prépare le jeu : Crée les cartes, distribue et TRIE les mains.
-     */
+    
     public void initialiserPartie(int nbJoueurs) {
         System.out.println("Initialisation de la partie pour " + nbJoueurs + " joueurs...");
 
-        // 1. Création du paquet (3 cartes de chaque valeur de 1 à 12)
+        
         List<Carte> toutesLesCartes = new ArrayList<>();
         Forme[] formes = {Forme.CERCLE, Forme.CARRE, Forme.ONDULATION};
         Couleur[] couleurs = {Couleur.ROUGE, Couleur.VERT, Couleur.VIOLET};
@@ -43,20 +41,20 @@ public class StatutJeu {
             }
         }
 
-        // 2. Mélange
+        
         Collections.shuffle(toutesLesCartes);
 
-        // 3. Création des joueurs
+        
         List<Joueur> joueurs = new ArrayList<>();
         for (int i = 0; i < nbJoueurs; i++) {
             Joueur j = new Joueur(i, "Joueur " + i, new ArrayList<>(), new ArrayList<>());
             joueurs.add(j);
         }
 
-        // 4. Distribution
-        // Règle standard Trio (selon nb joueurs, ici version simplifiée : tout sauf 9 cartes au milieu)
-        // Disons qu'on laisse ~9 cartes au milieu et on distribue le reste équitablement
-        int cartesAuMilieu = 9; // Variable selon règles exactes
+        
+        
+        
+        int cartesAuMilieu = 9; 
         int cartesParJoueur = (36 - cartesAuMilieu) / nbJoueurs;
 
         int indexCarte = 0;
@@ -65,51 +63,49 @@ public class StatutJeu {
                 j.getDeck().add(toutesLesCartes.get(indexCarte++));
             }
             
-            // --- IMPORTANT : TRIER LA MAIN DU JOUEUR ---
-            // Les cartes doivent être triées du plus petit au plus grand pour que Min/Max fonctionne
+            
+            
             Collections.sort(j.getDeck(), Comparator.comparingInt(Carte::getValeur));
         }
 
-        // 5. Cartes restantes au milieu
+        
         List<Carte> milieu = new ArrayList<>();
         while (indexCarte < toutesLesCartes.size()) {
             milieu.add(toutesLesCartes.get(indexCarte++));
         }
 
-        // 6. Création du Plateau initial
+        
         this.plateau = new Plateau(joueurs, milieu, 0, Phase.PREMIERE_MANCHE, -1);
         System.out.println("Partie initialisée ! Plateau prêt.");
     }
 
-    /**
-     * Démarre le serveur et attend les connexions
-     */
+    
     public void demarrerServeur(int port) {
         try {
             ServerSocket serverSocket = new ServerSocket(port);
             System.out.println("Serveur démarré sur le port " + port);
 
-            // On initialise une partie à 2 joueurs pour tester (à adapter)
+            
             initialiserPartie(2);
 
             int idJoueurConnecte = 0;
 
-            while (idJoueurConnecte < 2) { // On attend 2 joueurs
+            while (idJoueurConnecte < 2) { 
                 Socket socket = serverSocket.accept();
                 System.out.println("Joueur " + idJoueurConnecte + " connecté !");
 
-                // Flux de sortie (pour envoyer le plateau)
+                
                 ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
                 clientsOutput.add(out);
                 
-                // Envoyer le plateau initial tout de suite
+                
                 out.writeObject(plateau);
                 out.flush();
 
-                // Flux d'entrée (pour recevoir les actions) dans un Thread séparé
+                
                 ObjectInputStream in = new ObjectInputStream(socket.getInputStream());
                 
-                // Lancer le thread de gestion du joueur
+                
                 Thread t = new Thread(new GestionJoueur(in, idJoueurConnecte));
                 t.start();
 
@@ -121,9 +117,7 @@ public class StatutJeu {
         }
     }
 
-    /**
-     * Classe interne (Thread) pour écouter un joueur spécifique
-     */
+    
     class GestionJoueur implements Runnable {
         private final ObjectInputStream in;
         private final int idJoueur;
@@ -137,18 +131,18 @@ public class StatutJeu {
         public void run() {
             try {
                 while (true) {
-                    // 1. Attendre une Action
+                    
                     Object objetRecu = in.readObject();
                     
                     if (objetRecu instanceof Action action) {
                         System.out.println("Action reçue du J" + idJoueur);
 
-                        // 2. Appliquer les règles (Synchronized pour éviter conflits si 2 jouent en même temps)
+                        
                         synchronized (StatutJeu.this.plateauLock) {
                             regle.appliquer(StatutJeu.this.plateau, action);
                         }
 
-                        // 3. Diffuser le nouveau plateau à TOUS les joueurs
+                        
                         diffuserPlateau();
                     }
                 }
@@ -163,7 +157,7 @@ public class StatutJeu {
     private void diffuserPlateau() {
         for (ObjectOutputStream out : clientsOutput) {
             try {
-                out.reset(); // Indispensable pour rafraîchir l'objet envoyé
+                out.reset(); 
                 out.writeObject(plateau);
                 out.flush();
             } catch (IOException e) {
@@ -172,7 +166,7 @@ public class StatutJeu {
         }
     }
 
-    // MAIN pour lancer le serveur
+    
     public static void main(String[] args) {
         StatutJeu serveur = new StatutJeu();
         serveur.demarrerServeur(12345);

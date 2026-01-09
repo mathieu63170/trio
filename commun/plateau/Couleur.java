@@ -2,11 +2,9 @@ package commun.plateau;
 
 import java.io.Serializable;
 
-/**
- * Énumération des couleurs possibles pour les cartes du jeu Trio
- */
+
 public enum Couleur implements Serializable {
-    ROUGE("🔴", "Rouge"),
+    ROUGE("", "Rouge"),
     VERT("🟢", "Vert"),
     VIOLET("🟣", "Violet");
 

@@ -6,8 +6,8 @@ import java.util.List;
 public class ActionTrio extends Action {
     
     private static final long serialVersionUID = 1L; 
-    private List<Integer> idsCartes;  // IDs des cartes (plus sûr que les objets)
-    private List<Integer> proprietaires;  // ID du propriétaire de chaque carte
+    private List<Integer> idsCartes;  
+    private List<Integer> proprietaires;  
     
     public ActionTrio(int idJoueur, List<Integer> idsCartes) {
         super(idJoueur);

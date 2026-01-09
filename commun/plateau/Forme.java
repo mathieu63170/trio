@@ -2,9 +2,7 @@ package commun.plateau;
 
 import java.io.Serializable;
 
-/**
- * Énumération des formes possibles pour les cartes du jeu Trio
- */
+
 public enum Forme implements Serializable {
     CERCLE("O", "Cercle"),
     CARRE("[]", "Carre"),
